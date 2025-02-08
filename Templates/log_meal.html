@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log Your Meal</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+        <h2 class="text-2xl font-bold mb-6 text-center">Log Your Meal</h2>
+        
+        <form id="mealLogForm" class="space-y-4">
+            <div>
+                <label for="mealType" class="block text-sm font-medium text-gray-700">Meal Type</label>
+                <select id="mealType" name="meal_type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required>
+                    <option value="">Select Meal Type</option>
+                    <option value="breakfast">Breakfast</option>
+                    <option value="lunch">Lunch</option>
+                    <option value="dinner">Dinner</option>
+                    <option value="snack">Snack</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="foodDetected" class="block text-sm font-medium text-gray-700">Food Detected</label>
+                <input type="text" id="foodDetected" name="food_detected" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label for="calories" class="block text-sm font-medium text-gray-700">Calories</label>
+                    <input type="number" id="calories" name="calories" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required>
+                </div>
+                <div>
+                    <label for="protein" class="block text-sm font-medium text-gray-700">Protein (g)</label>
+                    <input type="number" id="protein" name="protein" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label for="carbs" class="block text-sm font-medium text-gray-700">Carbs (g)</label>
+                    <input type="number" id="carbs" name="carbs" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required>
+                </div>
+                <div>
+                    <label for="fat" class="block text-sm font-medium text-gray-700">Fat (g)</label>
+                    <input type="number" id="fat" name="fat" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required>
+                </div>
+            </div>
+
+            <div>
+                <label for="imagePath" class="block text-sm font-medium text-gray-700">Image Path</label>
+                <input type="text" id="imagePath" name="image_path" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required>
+            </div>
+
+            <div>
+                <button type="submit" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                    Log Meal
+                </button>
+            </div>
+        </form>
+
+        <div id="messageContainer" class="mt-4 text-center"></div>
+    </div>
+
+    <script>
+        document.getElementById('mealLogForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const messageContainer = document.getElementById('messageContainer');
+            messageContainer.innerHTML = ''; // Clear previous messages
+
+            const formData = {
+                meal_type: document.getElementById('mealType').value,
+                food_detected: document.getElementById('foodDetected').value,
+                calories: parseFloat(document.getElementById('calories').value),
+                protein: parseFloat(document.getElementById('protein').value),
+                carbs: parseFloat(document.getElementById('carbs').value),
+                fat: parseFloat(document.getElementById('fat').value),
+                image_path: document.getElementById('imagePath').value
+            };
+
+            try {
+                const response = await axios.post('/log_meal', formData);
+                
+                // Success message
+                messageContainer.innerHTML = `
+                    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
+                        Meal logged successfully!
+                    </div>
+                `;
+
+                // Optional: Reset form after successful submission
+                this.reset();
+            } catch (error) {
+                // Error handling
+                messageContainer.innerHTML = `
+                    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                        ${error.response?.data?.error || 'An error occurred while logging the meal'}
+                    </div>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>

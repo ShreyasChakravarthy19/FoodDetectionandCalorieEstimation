@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food Detection and Calorie Estimation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 0;
+        }
+        .navbar {
+            background-color: #007BFF;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            margin: 0 10px;
+            font-weight: bold;
+        }
+        .navbar a:hover {
+            color: #f0f0f0;
+        }
+        .container {
+            text-align: center;
+            padding: 30px;
+        }
+        h1 {
+            color: #333;
+        }
+        .upload-section {
+            margin: 20px auto;
+            padding: 20px;
+            border: 2px dashed #ccc;
+            background-color: #fff;
+            width: 60%;
+        }
+        .upload-section input[type="file"] {
+            margin: 10px;
+        }
+        .upload-section button {
+            margin-top: 15px;
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+        .upload-section button:hover {
+            background-color: #0056b3;
+        }
+        .result-container {
+            margin: 20px auto;
+            width: 70%;
+            text-align: left;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        .result-container img {
+            max-width: 100px;
+            margin-right: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .navigation-buttons {
+            margin: 20px;
+        }
+        .navigation-buttons button {
+            margin: 5px;
+            padding: 10px 15px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .navigation-buttons button:hover {
+            background-color: #218838;
+        }
+        .total-summary {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #e9ecef;
+            border-radius: 5px;
+        }
+        table {
+            margin: 20px auto;
+            border-collapse: collapse;
+            width: 80%;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ccc;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .intake-button {
+            margin: 20px;
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div>
+            <a href="{{ url_for('index') }}">Home</a>
+            <a href="{{ url_for('intake') }}">Log Intake</a>
+            <a href="{{ url_for('meal_history_page') }}">Meal History</a>
+            <a href="{{ url_for('dashboard') }}">BMI</a>
+        </div>
+        <div>
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1>Food Detection and Calorie Estimation</h1>
+        <div class="upload-section">
+            <form id="uploadForm" enctype="multipart/form-data">
+                <input type="file" name="file" accept="image/*" multiple required>
+                <br>
+                <button type="submit">Upload and Predict</button>
+            </form>
+        </div>
+
+        <div class="result-container" id="resultContainer" style="display: none;">
+            <div id="dishDetails"></div>
+            <div class="navigation-buttons">
+                <button id="prevButton" style="display: none;">Previous</button>
+                <button id="nextButton" style="display: none;">Next</button>
+            </div>
+            <div class="total-summary" id="totalSummary" style="display: none;">
+                <h3>Total Nutritional Values:</h3>
+                <table>
+                    <tr>
+                        <th>Calories</th>
+                        <th>Protein</th>
+                        <th>Carbs</th>
+                        <th>Fat</th>
+                    </tr>
+                    <tr>
+                        <td id="totalCalories"></td>
+                        <td id="totalProtein"></td>
+                        <td id="totalCarbs"></td>
+                        <td id="totalFat"></td>
+                    </tr>
+                </table>
+                <button class="intake-button" id="viewIntakeButton" style="display: none;">
+                    View Detailed Intake
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // The existing JavaScript remains the same as in the previous version
+        const form = document.querySelector('#uploadForm');
+        const resultContainer = document.querySelector('#resultContainer');
+        const dishDetails = document.querySelector('#dishDetails');
+        const prevButton = document.querySelector('#prevButton');
+        const nextButton = document.querySelector('#nextButton');
+        const totalSummary = document.querySelector('#totalSummary');
+        const viewIntakeButton = document.querySelector('#viewIntakeButton');
+    
+        let dishes = [];
+        let currentDishIndex = 0;
+        let totalNutrition = {};
+    
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            const formData = new FormData(form);
+    
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    body: formData,
+                });
+    
+                if (!response.ok) {
+                    throw new Error(`Server returned an error: ${response.status}`);
+                }
+    
+                const data = await response.json();
+                console.log("Response Data:", data); // Debugging: Log the data
+    
+                // Validate structure
+                if (!data.dishes || !Array.isArray(data.dishes)) {
+                    throw new Error('Invalid data structure: Missing or malformed "dishes" array.');
+                }
+                if (!data.total_nutrition) {
+                    throw new Error('Invalid data structure: Missing "total_nutrition".');
+                }
+    
+                // Clear previous results
+                dishDetails.innerHTML = '';
+                dishes = data.dishes;
+                currentDishIndex = 0;
+                totalNutrition = data.total_nutrition;
+    
+                // Show total nutrition
+                document.querySelector('#totalCalories').innerText = data.total_nutrition.Calories || 'N/A';
+                document.querySelector('#totalProtein').innerText = data.total_nutrition.Protein || 'N/A';
+                document.querySelector('#totalCarbs').innerText = data.total_nutrition.Carbs || 'N/A';
+                document.querySelector('#totalFat').innerText = data.total_nutrition.Fat || 'N/A';
+                totalSummary.style.display = 'block';
+
+                // Show intake button
+                viewIntakeButton.style.display = 'block';
+                viewIntakeButton.onclick = () => {
+                    // Store total nutrition in localStorage for intake page
+                    localStorage.setItem('totalNutrition', JSON.stringify(totalNutrition));
+                    // Redirect to intake page
+                    window.location.href = '/intake';
+                };
+    
+                // Show the first dish
+                if (dishes.length > 0) {
+                    displayDish(currentDishIndex);
+                    resultContainer.style.display = 'block';
+                    updateNavigationButtons();
+                } else {
+                    alert('No dishes found in response.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert(`An error occurred: ${error.message}`);
+            }
+        };
+    
+        function displayDish(index) {
+            if (!dishes[index]) {
+                console.error(`Invalid dish index: ${index}`);
+                return;
+            }
+    
+            const dish = dishes[index];
+            dishDetails.innerHTML = `
+                <img src="${dish.image_path}" alt="Dish Image" style="max-width: 300px;">
+                <h3>${dish.food}</h3>
+                <p>Proportion in Image: ${dish.proportion || 'N/A'}%</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Calories</th>
+                            <th>Protein</th>
+                            <th>Carbs</th>
+                            <th>Fat</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>${dish.nutrition?.Calories || 'N/A'}</td>
+                            <td>${dish.nutrition?.Protein || 'N/A'}</td>
+                            <td>${dish.nutrition?.Carbs || 'N/A'}</td>
+                            <td>${dish.nutrition?.Fat || 'N/A'}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            `;
+        }
+    
+        function updateNavigationButtons() {
+            prevButton.style.display = currentDishIndex > 0 ? 'inline-block' : 'none';
+            nextButton.style.display = currentDishIndex < dishes.length - 1 ? 'inline-block' : 'none';
+        }
+    
+        prevButton.onclick = () => {
+            if (currentDishIndex > 0) {
+                currentDishIndex--;
+                displayDish(currentDishIndex);
+                updateNavigationButtons();
+            }
+        };
+    
+        nextButton.onclick = () => {
+            if (currentDishIndex < dishes.length - 1) {
+                currentDishIndex++;
+                displayDish(currentDishIndex);
+                updateNavigationButtons();
+            }
+        };
+    </script>
+</body>
+</html>

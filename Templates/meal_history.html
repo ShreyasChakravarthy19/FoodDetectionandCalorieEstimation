@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meal History Tracker</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto">
+            <h1 class="text-3xl font-bold mb-6 text-center text-gray-800">Meal History Dashboard</h1>
+
+            <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+                <div class="p-6 bg-gray-50 border-b flex flex-col md:flex-row justify-between items-center">
+                    <div class="flex space-x-4 mb-4 md:mb-0">
+                        <div>
+                            <label for="startDate" class="block text-sm font-medium text-gray-700">Start Date</label>
+                            <input type="date" id="startDate" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                        </div>
+                        <div>
+                            <label for="endDate" class="block text-sm font-medium text-gray-700">End Date</label>
+                            <input type="date" id="endDate" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                        </div>
+                        <button id="filterButton" class="self-end bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition">
+                            Filter
+                        </button>
+                    </div>
+                    <div class="text-right">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-sm text-gray-600">Total Calories</p>
+                                <p id="totalCalories" class="text-xl font-bold text-indigo-600">0</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600">Total Protein</p>
+                                <p id="totalProtein" class="text-xl font-bold text-green-600">0g</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-6">
+                    <div id="mealHistoryContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <!-- Meal cards will be dynamically inserted here -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8 bg-white shadow-lg rounded-lg overflow-hidden">
+                <canvas id="nutritionChart" class="w-full p-4"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <template id="mealCardTemplate">
+        <div class="bg-white border rounded-lg shadow-md p-4 transform transition hover:scale-105 hover:shadow-xl">
+            <div class="flex justify-between items-center mb-4">
+                <span class="meal-type-badge px-3 py-1 rounded-full text-xs font-bold"></span>
+                <span class="text-sm text-gray-500 meal-date"></span>
+            </div>
+            <div class="mb-4">
+                <h3 class="text-lg font-semibold text-gray-800 food-name"></h3>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+                <div class="bg-gray-50 p-2 rounded">
+                    <p class="text-xs text-gray-600">Calories</p>
+                    <p class="meal-calories text-indigo-600 font-bold"></p>
+                </div>
+                <div class="bg-gray-50 p-2 rounded">
+                    <p class="text-xs text-gray-600">Protein</p>
+                    <p class="meal-protein text-green-600 font-bold"></p>
+                </div>
+                <div class="bg-gray-50 p-2 rounded">
+                    <p class="text-xs text-gray-600">Carbs</p>
+                    <p class="meal-carbs text-blue-600 font-bold"></p>
+                </div>
+                <div class="bg-gray-50 p-2 rounded">
+                    <p class="text-xs text-gray-600">Fat</p>
+                    <p class="meal-fat text-red-600 font-bold"></p>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <script>
+        const mealTypeColors = {
+            'breakfast': 'bg-yellow-200 text-yellow-800',
+            'lunch': 'bg-green-200 text-green-800',
+            'dinner': 'bg-blue-200 text-blue-800',
+            'snack': 'bg-purple-200 text-purple-800'
+        };
+
+        async function fetchMealHistory(startDate = null, endDate = null) {
+            const mealHistoryContainer = document.getElementById('mealHistoryContainer');
+            const totalCaloriesSpan = document.getElementById('totalCalories');
+            const totalProteinSpan = document.getElementById('totalProtein');
+            const mealCardTemplate = document.getElementById('mealCardTemplate');
+
+            // Clear previous results
+            mealHistoryContainer.innerHTML = '';
+            totalCaloriesSpan.textContent = '0';
+            totalProteinSpan.textContent = '0';
+
+            try {
+                // Prepare query parameters
+                const params = new URLSearchParams();
+                if (startDate) params.append('start_date', startDate);
+                if (endDate) params.append('end_date', endDate);
+
+                const response = await axios.get(`/meal_history?${params.toString()}`);
+                const mealData = response.data.meal_data;
+
+                // Check if mealData is empty
+                if (!mealData || mealData.length === 0) {
+                    mealHistoryContainer.innerHTML = `
+                        <div class="col-span-full text-center text-gray-500">
+                            No meal history found for the selected date range.
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Calculate totals
+                const totalCalories = mealData.reduce((sum, meal) => sum + (meal.calories || 0), 0);
+                const totalProtein = mealData.reduce((sum, meal) => sum + (meal.protein || 0), 0);
+
+                totalCaloriesSpan.textContent = totalCalories.toFixed(0);
+                totalProteinSpan.textContent = totalProtein.toFixed(1);
+
+                // Populate meal history
+                mealData.forEach(meal => {
+                    const mealCard = mealCardTemplate.content.cloneNode(true);
+                    const mealType = meal.meal_type.toLowerCase();
+
+                    // Set meal type badge
+                    const mealTypeBadge = mealCard.querySelector('.meal-type-badge');
+                    mealTypeBadge.textContent = mealType.charAt(0).toUpperCase() + mealType.slice(1);
+                    mealTypeBadge.className += ' ' + (mealTypeColors[mealType] || 'bg-gray-200 text-gray-800');
+
+                    mealCard.querySelector('.meal-date').textContent = new Date(meal.date_logged).toLocaleDateString();
+                    mealCard.querySelector('.food-name').textContent = meal.food_detected || 'Unknown Food';
+                    mealCard.querySelector('.meal-calories').textContent = (meal.calories || 0).toFixed(0) + ' kcal';
+                    mealCard.querySelector('.meal-protein').textContent = (meal.protein || 0).toFixed(1) + ' g';
+                    mealCard.querySelector('.meal-carbs').textContent = (meal.carbs || 0).toFixed(1) + ' g';
+                    mealCard.querySelector('.meal-fat').textContent = (meal.fat || 0).toFixed(1) + ' g';
+
+                    mealHistoryContainer.appendChild(mealCard);
+                });
+
+                // Create or update the nutrition chart
+                createNutritionChart(mealData);
+            } catch (error) {
+                console.error('Error fetching meal history:', error);
+
+                // Display error message in the container
+                mealHistoryContainer.innerHTML = `
+                    <div class="col-span-full text-center text-red-500">
+                        Failed to load meal history. ${error.response?.data?.error || error.message}
+                    </div>
+                `;
+            }
+        }
+
+        let nutritionChartInstance = null;
+
+        function createNutritionChart(mealData) {
+            const ctx = document.getElementById('nutritionChart').getContext('2d');
+            
+            if (nutritionChartInstance) {
+                nutritionChartInstance.destroy();
+            }
+
+            const labels = mealData.map(meal => 
+                `${meal.meal_type.charAt(0).toUpperCase() + meal.meal_type.slice(1)} (${new Date(meal.date_logged).toLocaleDateString()})`
+            );
+
+            nutritionChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Calories',
+                            data: mealData.map(meal => meal.calories),
+                            backgroundColor: 'rgba(99, 102, 241, 0.6)',
+                        },
+                        {
+                            label: 'Protein (g)',
+                            data: mealData.map(meal => meal.protein),
+                            backgroundColor: 'rgba(16, 185, 129, 0.6)',
+                        },
+                        {
+                            label: 'Carbs (g)',
+                            data: mealData.map(meal => meal.carbs),
+                            backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                        },
+                        {
+                            label: 'Fat (g)',
+                            data: mealData.map(meal => meal.fat),
+                            backgroundColor: 'rgba(244, 63, 94, 0.6)',
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Nutrition Breakdown by Meal'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Quantity'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Initial load of meal history
+        fetchMealHistory();
+
+        // Event listener for filter button
+        document.getElementById('filterButton').addEventListener('click', () => {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            fetchMealHistory(startDate, endDate);
+        });
+    </script>
+</body>
+</html>
