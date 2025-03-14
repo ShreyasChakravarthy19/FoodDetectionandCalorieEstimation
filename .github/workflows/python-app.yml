@@ -36,6 +36,7 @@ jobs:
         if [ ! -f "saved_models/my_model_eff.keras" ]; then
           echo "Model file not found!"
           exit 1
+        fi
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
