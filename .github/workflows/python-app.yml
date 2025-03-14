@@ -31,7 +31,7 @@ jobs:
       run: echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
     - name: Download model file
       run: |
-        curl -L -o "E:/Projects/Mini Project Food Detection and Calorie Estimation/MiniProj FDCE/saved models/my_model_eff.keras" "URL_TO_YOUR_MODEL_FILE"
+        curl -L -o "E:/Projects/Mini Project Food Detection and Calorie Estimation/MiniProj FDCE/saved models/my_model_eff.keras"
     - name: Verify model file
       run: |
         if [ ! -f "E:/Projects/Mini Project Food Detection and Calorie Estimation/MiniProj FDCE/saved models/my_model_eff.keras" ]; then
