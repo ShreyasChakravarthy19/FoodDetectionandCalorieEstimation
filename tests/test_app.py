@@ -11,7 +11,11 @@ from tensorflow.keras.utils import load_img, img_to_array
 import cv2
 import datetime
 import pytest
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from app import app
+
 
 app = Flask(__name__)
 
