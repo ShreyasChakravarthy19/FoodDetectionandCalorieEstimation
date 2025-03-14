@@ -37,8 +37,8 @@ jobs:
 
     - name: Verify Model File
       run: |
-        if [ ! -f "saved_models/my_model_eff.keras" ]; then
-          echo "Model file not found!"
+        if [ ! -s "saved_models/my_model_eff.keras" ]; then
+          echo "Model file not found or is empty!"
           exit 1
         fi
       shell: bash
