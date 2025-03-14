@@ -29,6 +29,15 @@ jobs:
         pip install -r requirements.txt
     - name: Set PYTHONPATH
       run: echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
+    - name: Download model file
+      run: |
+        curl -L -o "E:/Projects/Mini Project Food Detection and Calorie Estimation/MiniProj FDCE/saved models/my_model_eff.keras" "URL_TO_YOUR_MODEL_FILE"
+    - name: Verify model file
+      run: |
+        if [ ! -f "E:/Projects/Mini Project Food Detection and Calorie Estimation/MiniProj FDCE/saved models/my_model_eff.keras" ]; then
+          echo "Model file not found!"
+          exit 1
+        fi
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
