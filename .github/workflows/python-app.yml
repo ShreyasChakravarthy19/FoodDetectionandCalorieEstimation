@@ -29,9 +29,8 @@ jobs:
         pip install -r requirements.txt
     - name: Set PYTHONPATH
       run: echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
-    - name: Download model file
-      run: |
-        curl -L -o "E:/Projects/Mini Project Food Detection and Calorie Estimation/MiniProj FDCE/saved models/my_model_eff.keras"
+    - name: Download Model
+      run: curl -L -o "E:/Projects/Mini Project Food Detection and Calorie Estimation/MiniProj FDCE/saved models/my_model_eff.keras" "https://github.com/ShreyasChakravarthy19/FoodDetectionandCalorieEstimation/releases/download/v1.0.0/my_model_eff.keras"
     - name: Verify model file
       run: |
         if [ ! -f "E:/Projects/Mini Project Food Detection and Calorie Estimation/MiniProj FDCE/saved models/my_model_eff.keras" ]; then
