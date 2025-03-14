@@ -26,6 +26,7 @@ jobs:
         pip install pytest
         pip install tensorflow
         pip install flake8
+        pip install requests
         pip install -r requirements.txt
     - name: Set PYTHONPATH
       run: echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
