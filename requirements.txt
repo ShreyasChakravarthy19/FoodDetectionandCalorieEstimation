@@ -1,7 +1,8 @@
+flask
+flask_sqlalchemy
+tensorflow
 numpy
 pandas
-tensorflow
-keras
 opencv-python
 scikit-learn
 matplotlib
