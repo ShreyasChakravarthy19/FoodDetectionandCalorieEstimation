@@ -26,10 +26,27 @@ UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+model_path = 'E:/Projects/Mini Project Food Detection and Calorie Estimation/MiniProj FDCE/saved models/my_model_eff.keras'
+model_url = 'https://github.com/ShreyasChakravarthy19/FoodDetectionandCalorieEstimation/releases/download/v1.0.0/my_model_eff.keras'
+
+
+# Function to download the model file
+def download_model(url, dest_path):
+    response = requests.get(url, stream=True)
+    response.raise_for_status()
+    with open(dest_path, 'wb') as f:
+        for chunk in response.iter_content(chunk_size=8192):
+            f.write(chunk)
+    print("Model downloaded successfully!")
+
+# Check if the model file exists, if not, download it
+if not os.path.exists(model_path):
+    os.makedirs(os.path.dirname(model_path), exist_ok=True)
+    download_model(model_url, model_path)
+
 # Load the model
-model_path = 'saved models/my_model_eff.keras'
 model = load_model(model_path)
-print("Model loaded Successfully!")
+print("Model loaded successfully!")
 
 # Load the nutritional dataset
 nutrition_file_path = os.path.join('food20dataset', 'metadata', 'dataset.csv')
