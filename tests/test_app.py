@@ -10,6 +10,8 @@ from tensorflow.keras.models import load_model
 from tensorflow.keras.utils import load_img, img_to_array
 import cv2
 import datetime
+import pytest
+from app import app
 
 app = Flask(__name__)
 
@@ -489,6 +491,15 @@ def predict():
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
+@pytest.fixture
+def client():
+    app.config['TESTING'] = True
+    with app.test_client() as client:
+        yield client
+
+def test_index(client):
+    rv = client.get('/')
+    assert rv.status_code == 200
 @app.route('/intake')
 def intake():
     # Ensure user is logged in
