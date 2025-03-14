@@ -30,13 +30,12 @@ jobs:
     - name: Set PYTHONPATH
       run: echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
     - name: Download Model
-      run: curl -L -o "E:/Projects/Mini Project Food Detection and Calorie Estimation/MiniProj FDCE/saved models/my_model_eff.keras" "https://github.com/ShreyasChakravarthy19/FoodDetectionandCalorieEstimation/releases/download/v1.0.0/my_model_eff.keras"
+      run: curl -L -o "saved_models/my_model_eff.keras" "https://github.com/ShreyasChakravarthy19/FoodDetectionandCalorieEstimation/releases/download/v1.0/my_model_eff.keras"
     - name: Verify model file
       run: |
-        if [ ! -f "E:/Projects/Mini Project Food Detection and Calorie Estimation/MiniProj FDCE/saved models/my_model_eff.keras" ]; then
+        if [ ! -f "saved_models/my_model_eff.keras" ]; then
           echo "Model file not found!"
           exit 1
-        fi
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
