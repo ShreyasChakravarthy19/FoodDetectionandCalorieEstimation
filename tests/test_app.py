@@ -27,12 +27,12 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # Load the model
-model_path = 'E:/Projects/Mini Project Food Detection and Calorie Estimation/MiniProj FDCE/saved models/my_model_eff.keras'
+model_path = 'saved models/my_model_eff.keras'
 model = load_model(model_path)
 print("Model loaded Successfully!")
 
 # Load the nutritional dataset
-nutrition_file_path = r'E:\\Projects\\Mini Project Food Detection and Calorie Estimation\\MiniProj FDCE\\food20dataset\\metadata\\dataset .csv'
+nutrition_file_path = os.path.join('food20dataset', 'metadata', 'dataset.csv')
 nutrition_df = pd.read_csv(nutrition_file_path)
 
 # Database Configuration
