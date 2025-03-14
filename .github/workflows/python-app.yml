@@ -30,9 +30,9 @@ jobs:
     - name: Set PYTHONPATH
       run: echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
     - name: Download Model
-      run: curl -L -o "saved_models/my_model_eff.keras" "https://github.com/ShreyasChakravarthy19/FoodDetectionandCalorieEstimation/releases/download/v1.0/my_model_eff.keras"
-    - name: Verify model file
       run: |
+        mkdir -p saved_models
+        curl -L -o "saved_models/my_model_eff.keras" "https://github.com/ShreyasChakravarthy19/FoodDetectionandCalorieEstimation/releases/download/v1.0/my_model_eff.keras"
         if [ ! -f "saved_models/my_model_eff.keras" ]; then
           echo "Model file not found!"
           exit 1
